@@ -14,12 +14,12 @@ public class SnowflakeConfig {
     /**
      * The number of bits allocated for the data center ID in the Snowflake ID.
      */
-    public static final long DATA_CENTER_ID_BITS = 5L;
+    public static final byte DATA_CENTER_ID_BITS = 5;
 
     /**
      * The number of bits allocated for the machine ID in the Snowflake ID.
      */
-    public static final long MACHINE_ID_BITS = 5L;
+    public static final byte MACHINE_ID_BITS = 5;
 
     /**
      * The maximum value for the data center ID, calculated based on the number of bits allocated.

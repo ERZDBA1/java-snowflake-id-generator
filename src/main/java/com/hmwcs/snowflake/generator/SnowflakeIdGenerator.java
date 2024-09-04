@@ -55,6 +55,7 @@ public class SnowflakeIdGenerator {
      * Generates a unique Snowflake ID.
      *
      * @return A unique 64-bit Snowflake ID
+     * @throws ClockMovedBackwardsException if the system clock moves backwards.
      */
     public synchronized long nextId() {
         long timestamp = currentTimeMillis();
