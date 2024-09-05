@@ -26,9 +26,9 @@ import static com.hmwcs.snowflake.config.SnowflakeConfig.*;
  * </p>
  */
 public class SnowflakeIdGenerator {
-    private final long DATA_CENTER_ID; // ID of the data center
-    private final long MACHINE_ID; // ID of the machine
-    private long sequence = 0L; // Sequence number
+    private final int DATA_CENTER_ID; // ID of the data center
+    private final int MACHINE_ID; // ID of the machine
+    private int sequence = 0; // Sequence number
     private long lastTimestamp = -1L; // Last timestamp for generating IDs
 
     /**
@@ -38,7 +38,7 @@ public class SnowflakeIdGenerator {
      * @param machineId    The ID of the machine (0-31). Cannot be null.
      * @throws IllegalArgumentException if the dataCenterId or machineId is out of range or null
      */
-    public SnowflakeIdGenerator(Long dataCenterId, Long machineId) {
+    public SnowflakeIdGenerator(Integer dataCenterId, Integer machineId) {
         if (dataCenterId == null || dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
             throw new IllegalArgumentException(
                     String.format("DataCenter ID must be non-null and can't be greater than %d or less than 0", MAX_DATA_CENTER_ID));
@@ -67,13 +67,13 @@ public class SnowflakeIdGenerator {
             sequence = (sequence + 1) & SEQUENCE_MASK;
             if (sequence == 0)
                 timestamp = waitNextMillis(lastTimestamp);
-        } else sequence = 0L;
+        } else sequence = 0;
 
         lastTimestamp = timestamp;
 
         return ((timestamp - EPOCH) << TIMESTAMP_LEFT_SHIFT) |
-                (DATA_CENTER_ID << DATA_CENTER_ID_SHIFT) |
-                (MACHINE_ID << MACHINE_ID_SHIFT) |
+                ((long) DATA_CENTER_ID << DATA_CENTER_ID_SHIFT) |
+                ((long) MACHINE_ID << MACHINE_ID_SHIFT) |
                 sequence;
     }
 
