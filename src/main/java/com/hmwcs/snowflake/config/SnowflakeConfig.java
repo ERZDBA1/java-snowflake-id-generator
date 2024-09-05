@@ -24,12 +24,12 @@ public class SnowflakeConfig {
     /**
      * The maximum value for the data center ID, calculated based on the number of bits allocated.
      */
-    public static final long MAX_DATA_CENTER_ID = -1L ^ (-1L << DATA_CENTER_ID_BITS);
+    public static final long MAX_DATA_CENTER_ID = ~(-1L << DATA_CENTER_ID_BITS);
 
     /**
      * The maximum value for the machine ID, calculated based on the number of bits allocated.
      */
-    public static final long MAX_MACHINE_ID = -1L ^ (-1L << MACHINE_ID_BITS);
+    public static final long MAX_MACHINE_ID = ~(-1L << MACHINE_ID_BITS);
 
     /**
      * The number of bits allocated for the sequence number in the Snowflake ID.
@@ -54,5 +54,5 @@ public class SnowflakeConfig {
     /**
      * A mask used to ensure the sequence number fits within the allocated number of bits.
      */
-    public static final long SEQUENCE_MASK = -1L ^ (-1L << SEQUENCE_BITS);
+    public static final long SEQUENCE_MASK = ~(-1L << SEQUENCE_BITS);
 }
