@@ -36,16 +36,16 @@ public class SnowflakeIdGenerator {
      *
      * @param dataCenterId The ID of the data center (0-31). Cannot be null.
      * @param machineId    The ID of the machine (0-31). Cannot be null.
-     * @throws IllegalArgumentException if the dataCenterId or machineId is out of range or null
+     * @throws IllegalArgumentException if the dataCenterId or machineId is out of range
      */
-    public SnowflakeIdGenerator(Integer dataCenterId, Integer machineId) {
-        if (dataCenterId == null || dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
+    public SnowflakeIdGenerator(int dataCenterId, int machineId) {
+        if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
             throw new IllegalArgumentException(
-                    String.format("DataCenter ID must be non-null and can't be greater than %d or less than 0", MAX_DATA_CENTER_ID));
+                    String.format("DataCenter ID can't be greater than %d or less than 0", MAX_DATA_CENTER_ID));
 
-        if (machineId == null || machineId > MAX_MACHINE_ID || machineId < 0)
+        if (machineId > MAX_MACHINE_ID || machineId < 0)
             throw new IllegalArgumentException(
-                    String.format("Machine ID must be non-null and can't be greater than %d or less than 0", MAX_MACHINE_ID));
+                    String.format("Machine ID can't be greater than %d or less than 0", MAX_MACHINE_ID));
 
         DATA_CENTER_ID = dataCenterId;
         MACHINE_ID = machineId;
