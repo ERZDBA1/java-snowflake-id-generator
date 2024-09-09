@@ -6,12 +6,12 @@ package com.hmwcs.snowflake.config;
  */
 public class SnowflakeConfig {
     /**
-     * The custom epoch used for generating timestamps in the Snowflake ID.
+     * The default epoch used for generating timestamps in the Snowflake ID.
      * Represents the time in milliseconds since 2024/09/01.
      * <p>
      * The timestamp uses 41 bits in the Snowflake ID, capable of representing up to 69.7 years.
      */
-    public static final long EPOCH = 1725148800000L;
+    public static final long DEFAULT_EPOCH = 1725148800000L;
 
     /**
      * The number of bits allocated for the data center ID in the Snowflake ID.

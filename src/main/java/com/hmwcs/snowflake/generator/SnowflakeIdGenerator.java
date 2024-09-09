@@ -28,17 +28,31 @@ import static com.hmwcs.snowflake.config.SnowflakeConfig.*;
 public class SnowflakeIdGenerator {
     private final int DATA_CENTER_ID; // ID of the data center
     private final int MACHINE_ID; // ID of the machine
+    private final long EPOCH; // The epoch used for ID generation
+
     private int sequence = 0; // Sequence number
     private long lastTimestamp = -1L; // Last timestamp for generating IDs
 
     /**
-     * Constructor to initialize the Snowflake ID generator.
+     * Constructor to initialize the Snowflake ID generator with default epoch.
      *
      * @param dataCenterId The ID of the data center (0-31). Cannot be null.
-     * @param machineId    The ID of the machine (0-31). Cannot be null.
+     * @param machineId The ID of the machine (0-31). Cannot be null.
      * @throws IllegalArgumentException if the dataCenterId or machineId is out of range
      */
     public SnowflakeIdGenerator(int dataCenterId, int machineId) {
+        this(dataCenterId, machineId, DEFAULT_EPOCH);
+    }
+
+    /**
+     * Constructor to initialize the Snowflake ID generator with a custom epoch.
+     *
+     * @param dataCenterId The ID of the data center (0-31). Cannot be null.
+     * @param machineId The ID of the machine (0-31). Cannot be null.
+     * @param customEpoch The custom epoch to use for generating IDs.
+     * @throws IllegalArgumentException if the dataCenterId or machineId is out of range
+     */
+    public SnowflakeIdGenerator(int dataCenterId, int machineId, long customEpoch) {
         if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
             throw new IllegalArgumentException(
                     String.format("DataCenter ID can't be greater than %d or less than 0", MAX_DATA_CENTER_ID));
@@ -49,6 +63,7 @@ public class SnowflakeIdGenerator {
 
         DATA_CENTER_ID = dataCenterId;
         MACHINE_ID = machineId;
+        EPOCH = customEpoch;
     }
 
     /**
