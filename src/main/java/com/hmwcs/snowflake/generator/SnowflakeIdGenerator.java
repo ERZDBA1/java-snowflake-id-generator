@@ -49,7 +49,7 @@ public class SnowflakeIdGenerator {
      *
      * @param dataCenterId The ID of the data center (0-31). Cannot be null.
      * @param machineId The ID of the machine (0-31). Cannot be null.
-     * @param customEpoch The custom epoch to use for generating IDs.
+     * @param customEpoch The custom epoch to use for generating IDs
      * @throws IllegalArgumentException if the dataCenterId or machineId is out of range
      */
     public SnowflakeIdGenerator(int dataCenterId, int machineId, long customEpoch) {
@@ -70,7 +70,7 @@ public class SnowflakeIdGenerator {
      * Generates a unique Snowflake ID.
      *
      * @return A unique 64-bit Snowflake ID
-     * @throws ClockMovedBackwardsException if the system clock moves backwards.
+     * @throws ClockMovedBackwardsException if the system clock moves backwards
      */
     public synchronized long nextId() {
         long timestamp = currentTimeMillis();
