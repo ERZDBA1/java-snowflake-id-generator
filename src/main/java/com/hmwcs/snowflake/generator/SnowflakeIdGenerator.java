@@ -3,6 +3,7 @@ package com.hmwcs.snowflake.generator;
 import com.hmwcs.snowflake.exception.ClockMovedBackwardsException;
 
 import static com.hmwcs.snowflake.config.SnowflakeConfig.*;
+import static java.lang.System.currentTimeMillis;
 
 /**
  * Generates unique IDs using the Twitter Snowflake algorithm.
@@ -86,6 +87,10 @@ public class SnowflakeIdGenerator {
 
         lastTimestamp = timestamp;
 
+        return constructId(timestamp, sequence);
+    }
+
+    private long constructId(long timestamp, int sequence) {
         return ((timestamp - EPOCH) << TIMESTAMP_LEFT_SHIFT) |
                 ((long) DATA_CENTER_ID << DATA_CENTER_ID_SHIFT) |
                 ((long) MACHINE_ID << MACHINE_ID_SHIFT) |
@@ -97,21 +102,15 @@ public class SnowflakeIdGenerator {
      *
      * @param lastTimestamp The timestamp of the last ID generated
      * @return The current timestamp
+     * @throws ClockMovedBackwardsException if the system clock moves backwards
      */
     private long waitNextMillis(long lastTimestamp) {
         long timestamp = currentTimeMillis();
         while (timestamp <= lastTimestamp)
-            timestamp = currentTimeMillis();
+            if (timestamp < lastTimestamp)
+                throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
+            else timestamp = currentTimeMillis();
 
         return timestamp;
-    }
-
-    /**
-     * Returns the current time in milliseconds.
-     *
-     * @return The current timestamp in milliseconds
-     */
-    private long currentTimeMillis() {
-        return System.currentTimeMillis();
     }
 }
