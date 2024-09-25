@@ -46,7 +46,7 @@ public class SnowflakeConfig {
     /**
      * The number of bits to shift the data center ID to the left in the final Snowflake ID.
      */
-    public static final int DATA_CENTER_ID_SHIFT = SEQUENCE_BITS + MACHINE_ID_BITS;
+    public static final int DATA_CENTER_ID_SHIFT = MACHINE_ID_SHIFT + MACHINE_ID_BITS;
 
     /**
      * The number of bits to shift the timestamp to the left in the final Snowflake ID.
