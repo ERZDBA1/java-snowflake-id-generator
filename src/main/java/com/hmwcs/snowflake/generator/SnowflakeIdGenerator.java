@@ -87,14 +87,26 @@ public class SnowflakeIdGenerator {
 
         lastTimestamp = timestamp;
 
-        return constructId(timestamp, sequence);
+        return generateId(timestamp, sequence);
     }
 
-    private long constructId(long timestamp, int sequence) {
+    /**
+     * Constructs a unique Snowflake ID based on the timestamp, data center ID, machine ID, and sequence number.
+     *
+     * <p>
+     * The generated ID is composed by left-shifting the timestamp and combining it with the data center ID, machine ID,
+     * and sequence number using bitwise OR operations.
+     * </p>
+     *
+     * @param timestamp The current timestamp in milliseconds
+     * @param sequence The sequence number for the current millisecond
+     * @return A unique 64-bit Snowflake ID
+     */
+    private long generateId(long timestamp, int sequence) {
         return ((timestamp - EPOCH) << TIMESTAMP_LEFT_SHIFT) |
                 ((long) DATA_CENTER_ID << DATA_CENTER_ID_SHIFT) |
                 ((long) MACHINE_ID << MACHINE_ID_SHIFT) |
-                sequence;
+                (sequence & SEQUENCE_MASK);
     }
 
     /**
