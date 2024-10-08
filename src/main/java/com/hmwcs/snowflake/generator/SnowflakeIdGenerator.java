@@ -103,7 +103,7 @@ public class SnowflakeIdGenerator {
             if (atomicState.compareAndSet(currentState, newState))
                 return generateId(timestamp, sequence);
             // If CAS fails, another thread has updated the state; retry
-            LockSupport.parkNanos(1000);
+            Thread.onSpinWait();
         }
     }
 
@@ -136,7 +136,7 @@ public class SnowflakeIdGenerator {
     private long waitNextMillis(long lastTimestamp) {
         long timestamp = currentTimeMillis();
         while (timestamp <= lastTimestamp) {
-            LockSupport.parkNanos(1000);
+            Thread.onSpinWait();
             if (timestamp < lastTimestamp)
                 throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
             else timestamp = currentTimeMillis();
