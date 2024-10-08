@@ -70,6 +70,9 @@ public class SnowflakeIdGenerator {
      * @throws IllegalArgumentException if the dataCenterId or machineId is out of range
      */
     public SnowflakeIdGenerator(int dataCenterId, int machineId, long customEpoch) {
+        if (customEpoch > currentTimeMillis())
+            throw new IllegalArgumentException("Custom epoch cannot be in the future");
+
         if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
             throw new IllegalArgumentException(
                     String.format("Data Center ID (%d) must be between 0 and %d", dataCenterId, MAX_DATA_CENTER_ID));
@@ -110,6 +113,7 @@ public class SnowflakeIdGenerator {
             if (atomicState.compareAndSet(currentState, newState))
                 return generateId(timestamp, sequence);
             // If CAS fails, another thread has updated the state; retry
+            Thread.yield();
         }
     }
 
@@ -141,13 +145,12 @@ public class SnowflakeIdGenerator {
      */
     private long waitNextMillis(long lastTimestamp) {
         long timestamp = currentTimeMillis();
-        while (timestamp <= lastTimestamp)
+        while (timestamp <= lastTimestamp) {
+            Thread.yield(); // Hint to the scheduler that the thread is willing to yield its current use of a processor
             if (timestamp < lastTimestamp)
                 throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
-            else {
-                Thread.yield(); // Hint to the scheduler that the thread is willing to yield its current use of a processor
-                timestamp = currentTimeMillis();
-            }
+            else timestamp = currentTimeMillis();
+        }
 
         return timestamp;
     }
