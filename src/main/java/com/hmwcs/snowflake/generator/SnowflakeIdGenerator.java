@@ -2,6 +2,9 @@ package com.hmwcs.snowflake.generator;
 
 import com.hmwcs.snowflake.exception.ClockMovedBackwardsException;
 
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
+
 import static com.hmwcs.snowflake.config.SnowflakeConfig.*;
 import static java.lang.System.currentTimeMillis;
 
@@ -31,8 +34,11 @@ public class SnowflakeIdGenerator {
     private final int machineId; // ID of the machine
     private final long epoch; // The epoch used for ID generation
 
-    private int sequence = 0; // Sequence number
-    private long lastTimestamp = -1L; // Last timestamp for generating IDs
+    private record State(long timestamp, int sequence) {
+    }
+
+    // Atomic reference to the current state
+    private final AtomicReference<State> atomicState = new AtomicReference<>(new State(-1L, 0));
 
     /**
      * Constructor to initialize the Snowflake ID generator with default epoch.
@@ -59,15 +65,15 @@ public class SnowflakeIdGenerator {
 
         if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
             throw new IllegalArgumentException(
-                    String.format("DataCenter ID can't be greater than %d or less than 0", MAX_DATA_CENTER_ID));
+                    String.format("Data Center ID (%d) must be between 0 and %d", dataCenterId, MAX_DATA_CENTER_ID));
 
         if (machineId > MAX_MACHINE_ID || machineId < 0)
             throw new IllegalArgumentException(
-                    String.format("Machine ID can't be greater than %d or less than 0", MAX_MACHINE_ID));
+                    String.format("Machine ID (%d) must be between 0 and %d", machineId, MAX_MACHINE_ID));
 
         this.dataCenterId = dataCenterId;
         this.machineId = machineId;
-        this.epoch = customEpoch;
+        epoch = customEpoch;
     }
 
     /**
@@ -76,21 +82,29 @@ public class SnowflakeIdGenerator {
      * @return A unique 64-bit Snowflake ID
      * @throws ClockMovedBackwardsException if the system clock moves backwards
      */
-    public synchronized long nextId() {
-        long timestamp = currentTimeMillis();
+    public long nextId() {
+        while (true) {
+            State currentState = atomicState.get();
+            long timestamp = currentTimeMillis();
 
-        if (timestamp < lastTimestamp)
-            throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
+            if (timestamp < currentState.timestamp)
+                throw new ClockMovedBackwardsException(currentState.timestamp, timestamp);
 
-        if (lastTimestamp == timestamp) {
-            sequence = (sequence + 1) & SEQUENCE_MASK;
-            if (sequence == 0)
-                timestamp = waitNextMillis();
-        } else sequence = 0;
+            int sequence = currentState.sequence;
 
-        lastTimestamp = timestamp;
+            if (timestamp == currentState.timestamp) {
+                sequence = (sequence + 1) & SEQUENCE_MASK;
+                if (sequence == 0)
+                    timestamp = waitNextMillis(timestamp);
+            } else sequence = 0;
 
-        return generateId(timestamp, sequence);
+            State newState = new State(timestamp, sequence);
+
+            if (atomicState.compareAndSet(currentState, newState))
+                return generateId(timestamp, sequence);
+            // If CAS fails, another thread has updated the state; retry
+            LockSupport.parkNanos(1000);
+        }
     }
 
     /**
@@ -115,22 +129,17 @@ public class SnowflakeIdGenerator {
     /**
      * Waits for the next millisecond if the clock has not advanced.
      *
+     * @param lastTimestamp The timestamp of the last ID generated
      * @return The current timestamp
      * @throws ClockMovedBackwardsException if the system clock moves backwards
      */
-    private long waitNextMillis() {
+    private long waitNextMillis(long lastTimestamp) {
         long timestamp = currentTimeMillis();
-
-        if (timestamp < lastTimestamp)
-            throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
-
-        while (timestamp == lastTimestamp) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            timestamp = currentTimeMillis();
+        while (timestamp <= lastTimestamp) {
+            LockSupport.parkNanos(1000);
+            if (timestamp < lastTimestamp)
+                throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
+            else timestamp = currentTimeMillis();
         }
 
         return timestamp;
