@@ -2,8 +2,8 @@ package com.hmwcs.snowflake.generator;
 
 import com.hmwcs.snowflake.exception.ClockMovedBackwardsException;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 import static com.hmwcs.snowflake.config.SnowflakeConfig.*;
 import static java.lang.System.currentTimeMillis;
@@ -113,7 +113,7 @@ public class SnowflakeIdGenerator {
             if (atomicState.compareAndSet(currentState, newState))
                 return generateId(timestamp, sequence);
             // If CAS fails, another thread has updated the state; retry
-            Thread.yield();
+            LockSupport.parkNanos(1000);
         }
     }
 
@@ -146,7 +146,7 @@ public class SnowflakeIdGenerator {
     private long waitNextMillis(long lastTimestamp) {
         long timestamp = currentTimeMillis();
         while (timestamp <= lastTimestamp) {
-            Thread.yield(); // Hint to the scheduler that the thread is willing to yield its current use of a processor
+            LockSupport.parkNanos(1000); // Hint to the scheduler that the thread is willing to yield its current use of a processor
             if (timestamp < lastTimestamp)
                 throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
             else timestamp = currentTimeMillis();
