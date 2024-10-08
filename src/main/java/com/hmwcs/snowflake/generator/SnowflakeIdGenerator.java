@@ -2,6 +2,9 @@ package com.hmwcs.snowflake.generator;
 
 import com.hmwcs.snowflake.exception.ClockMovedBackwardsException;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static com.hmwcs.snowflake.config.SnowflakeConfig.*;
 import static java.lang.System.currentTimeMillis;
 
@@ -27,12 +30,25 @@ import static java.lang.System.currentTimeMillis;
  * </p>
  */
 public class SnowflakeIdGenerator {
-    private final int DATA_CENTER_ID; // ID of the data center
-    private final int MACHINE_ID; // ID of the machine
-    private final long EPOCH; // The epoch used for ID generation
+    private final int dataCenterId; // ID of the data center
+    private final int machineId; // ID of the machine
+    private final long epoch; // The epoch used for ID generation
 
-    private int sequence = 0; // Sequence number
-    private long lastTimestamp = -1L; // Last timestamp for generating IDs
+    // private final AtomicInteger sequence = new AtomicInteger(0); // Sequence number
+    // private long lastTimestamp = -1L; // Last timestamp for generating IDs
+
+    private static class State {
+        private final long timestamp;
+        private final int sequence;
+
+        State(long timestamp, int sequence) {
+            this.timestamp = timestamp;
+            this.sequence = sequence;
+        }
+    }
+
+    // Atomic reference to the current state
+    private final AtomicReference<State> atomicState = new AtomicReference<>(new State(-1L, 0));
 
     /**
      * Constructor to initialize the Snowflake ID generator with default epoch.
@@ -56,15 +72,15 @@ public class SnowflakeIdGenerator {
     public SnowflakeIdGenerator(int dataCenterId, int machineId, long customEpoch) {
         if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
             throw new IllegalArgumentException(
-                    String.format("DataCenter ID can't be greater than %d or less than 0", MAX_DATA_CENTER_ID));
+                    String.format("Data Center ID (%d) must be between 0 and %d", dataCenterId, MAX_DATA_CENTER_ID));
 
         if (machineId > MAX_MACHINE_ID || machineId < 0)
             throw new IllegalArgumentException(
-                    String.format("Machine ID can't be greater than %d or less than 0", MAX_MACHINE_ID));
+                    String.format("Machine ID (%d) must be between 0 and %d", machineId, MAX_DATA_CENTER_ID));
 
-        DATA_CENTER_ID = dataCenterId;
-        MACHINE_ID = machineId;
-        EPOCH = customEpoch;
+        this.dataCenterId = dataCenterId;
+        this.machineId = machineId;
+        epoch = customEpoch;
     }
 
     /**
@@ -73,21 +89,28 @@ public class SnowflakeIdGenerator {
      * @return A unique 64-bit Snowflake ID
      * @throws ClockMovedBackwardsException if the system clock moves backwards
      */
-    public synchronized long nextId() {
-        long timestamp = currentTimeMillis();
+    public long nextId() {
+        while (true) {
+            State currentState = atomicState.get();
+            long timestamp = currentTimeMillis();
 
-        if (timestamp < lastTimestamp)
-            throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
+            if (timestamp < currentState.timestamp)
+                throw new ClockMovedBackwardsException(currentState.timestamp, timestamp);
 
-        if (lastTimestamp == timestamp) {
-            sequence = (sequence + 1) & SEQUENCE_MASK;
-            if (sequence == 0)
-                timestamp = waitNextMillis(lastTimestamp);
-        } else sequence = 0;
+            int sequence = currentState.sequence;
 
-        lastTimestamp = timestamp;
+            if (timestamp == currentState.timestamp) {
+                sequence = (sequence + 1) & SEQUENCE_MASK;
+                if (sequence == 0)
+                    timestamp = waitNextMillis(timestamp);
+            } else sequence = 0;
 
-        return generateId(timestamp, sequence);
+            State newState = new State(timestamp, sequence);
+
+            if (atomicState.compareAndSet(currentState, newState))
+                return generateId(timestamp, sequence);
+            // If CAS fails, another thread has updated the state; retry
+        }
     }
 
     /**
@@ -103,9 +126,9 @@ public class SnowflakeIdGenerator {
      * @return A unique 64-bit Snowflake ID
      */
     private long generateId(long timestamp, int sequence) {
-        return ((timestamp - EPOCH) << TIMESTAMP_LEFT_SHIFT) |
-                ((long) DATA_CENTER_ID << DATA_CENTER_ID_SHIFT) |
-                ((long) MACHINE_ID << MACHINE_ID_SHIFT) |
+        return ((timestamp - epoch) << TIMESTAMP_LEFT_SHIFT) |
+                ((long) dataCenterId << DATA_CENTER_ID_SHIFT) |
+                ((long) machineId << MACHINE_ID_SHIFT) |
                 (sequence & SEQUENCE_MASK);
     }
 
@@ -121,7 +144,10 @@ public class SnowflakeIdGenerator {
         while (timestamp <= lastTimestamp)
             if (timestamp < lastTimestamp)
                 throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
-            else timestamp = currentTimeMillis();
+            else {
+                Thread.yield(); // Hint to the scheduler that the thread is willing to yield its current use of a processor
+                timestamp = currentTimeMillis();
+            }
 
         return timestamp;
     }
