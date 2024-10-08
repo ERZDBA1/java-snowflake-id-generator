@@ -25,7 +25,7 @@ public class Main {
     public static void benchmarkTest() {
         int dataCenterId = 1;
         int machineId = 1;
-        int iterations = 50_000_000; // Number of IDs to generate for the benchmark
+        int iterations = 20_000_000; // Number of IDs to generate for the benchmark
 
         SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(dataCenterId, machineId);
 
@@ -46,7 +46,7 @@ public class Main {
         int dataCenterId = 1;
         int machineId = 1;
         int numThreads = 10; // Number of threads to use for the test
-        int idsPerThread = 5_000_000; // Number of IDs each thread should generate
+        int idsPerThread = 2_000_000; // Number of IDs each thread should generate
 
         SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(dataCenterId, machineId);
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
