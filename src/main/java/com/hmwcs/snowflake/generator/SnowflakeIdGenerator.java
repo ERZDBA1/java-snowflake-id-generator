@@ -34,17 +34,7 @@ public class SnowflakeIdGenerator {
     private final int machineId; // ID of the machine
     private final long epoch; // The epoch used for ID generation
 
-    // private final AtomicInteger sequence = new AtomicInteger(0); // Sequence number
-    // private long lastTimestamp = -1L; // Last timestamp for generating IDs
-
-    private static class State {
-        private final long timestamp;
-        private final int sequence;
-
-        State(long timestamp, int sequence) {
-            this.timestamp = timestamp;
-            this.sequence = sequence;
-        }
+    private record State(long timestamp, int sequence) {
     }
 
     // Atomic reference to the current state
@@ -79,7 +69,7 @@ public class SnowflakeIdGenerator {
 
         if (machineId > MAX_MACHINE_ID || machineId < 0)
             throw new IllegalArgumentException(
-                    String.format("Machine ID (%d) must be between 0 and %d", machineId, MAX_DATA_CENTER_ID));
+                    String.format("Machine ID (%d) must be between 0 and %d", machineId, MAX_MACHINE_ID));
 
         this.dataCenterId = dataCenterId;
         this.machineId = machineId;
