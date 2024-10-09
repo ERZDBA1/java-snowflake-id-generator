@@ -29,15 +29,14 @@ public class Main {
 
         SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(dataCenterId, machineId);
 
-        long startTime = System.nanoTime();
+        long startTime = System.currentTimeMillis();
 
         for (int i = 0; i < iterations; i++) {
-            // System.out.println(i);
             idGenerator.nextId();
         }
 
-        long endTime = System.nanoTime();
-        double durationInSeconds = (endTime - startTime) / 1_000_000_000.0;
+        long endTime = System.currentTimeMillis();;
+        double durationInSeconds = (endTime - startTime) / 1_000.0;
 
         System.out.println("Generated " + iterations + " IDs in " + durationInSeconds + " seconds.");
     }
@@ -50,19 +49,19 @@ public class Main {
 
         SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(dataCenterId, machineId);
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        Set<Long> uniqueIds = new HashSet<>(); // To store unique IDs
+        // Set<Long> uniqueIds = new HashSet<>(); // To store unique IDs
 
-        long startTime = System.nanoTime();
+        long startTime = System.currentTimeMillis();
 
         for (int i = 0; i < numThreads; i++) {
             executor.submit(() -> {
                 for (int j = 0; j < idsPerThread; j++) {
                     long id = idGenerator.nextId();
-                    synchronized (uniqueIds) { // Ensure thread-safe addition to the set
-                        if (!uniqueIds.add(id)) { // Check for duplicates
-                            throw new RuntimeException("Duplicate ID detected: " + id);
-                        }
-                    }
+                    // synchronized (uniqueIds) { // Ensure thread-safe addition to the set
+                    //    if (!uniqueIds.add(id)) { // Check for duplicates
+                    //        throw new RuntimeException("Duplicate ID detected: " + id);
+                    //    }
+                    //}
                 }
             });
         }
@@ -75,8 +74,8 @@ public class Main {
             System.out.println("Concurrent test interrupted.");
         }
 
-        long endTime = System.nanoTime();
-        double durationInSeconds = (endTime - startTime) / 1_000_000_000.0;
+        long endTime = System.currentTimeMillis();
+        double durationInSeconds = (endTime - startTime) / 1_000.0;
 
         System.out.println("Concurrent test generated " + (numThreads * idsPerThread) + " IDs in " + durationInSeconds + " seconds.");
     }

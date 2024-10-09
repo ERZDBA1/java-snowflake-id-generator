@@ -3,7 +3,6 @@ package com.hmwcs.snowflake.generator;
 import com.hmwcs.snowflake.exception.ClockMovedBackwardsException;
 
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 
 import static com.hmwcs.snowflake.config.SnowflakeConfig.*;
 import static java.lang.System.currentTimeMillis;
@@ -51,6 +50,7 @@ public class SnowflakeIdGenerator {
         this(dataCenterId, machineId, DEFAULT_EPOCH);
     }
 
+    // Todo: add premature timestamp restriction
     /**
      * Constructor to initialize the Snowflake ID generator with a custom epoch.
      *
@@ -126,6 +126,7 @@ public class SnowflakeIdGenerator {
                 (sequence & SEQUENCE_MASK);
     }
 
+    // Todo: add clock move backward tolerance logic
     /**
      * Waits for the next millisecond if the clock has not advanced.
      *
