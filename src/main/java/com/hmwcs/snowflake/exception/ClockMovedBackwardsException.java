@@ -11,6 +11,6 @@ public class ClockMovedBackwardsException  extends RuntimeException {
      * @param currentTimestamp the current timestamp that is earlier than the last timestamp
      */
     public ClockMovedBackwardsException(long lastTimestamp, long currentTimestamp) {
-        super(String.format("Clock moved backwards. Refusing to generate id for %d milliseconds", lastTimestamp - currentTimestamp));
+        super(String.format("Clock moved backwards. Refusing to generate id for %d milliseconds", currentTimestamp - lastTimestamp));
     }
 }

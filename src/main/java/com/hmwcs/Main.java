@@ -15,21 +15,24 @@ public class Main {
 
         System.out.println("Generated Snowflake ID: " + uniqueId);
         System.out.println("In Binary Form: " + Long.toBinaryString(uniqueId));
+        System.out.println();
 
         benchmarkTest();
+        System.out.println();
         concurrentBenchmarkTest();
     }
 
     public static void benchmarkTest() {
         int dataCenterId = 1;
         int machineId = 1;
-        int iterations = 1_200_000; // Number of IDs to generate for the benchmark
+        int iterations = 20_000_000; // Number of IDs to generate for the benchmark
 
         SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(dataCenterId, machineId);
 
         long startTime = System.nanoTime();
 
         for (int i = 0; i < iterations; i++) {
+            // System.out.println(i);
             idGenerator.nextId();
         }
 
@@ -37,14 +40,13 @@ public class Main {
         double durationInSeconds = (endTime - startTime) / 1_000_000_000.0;
 
         System.out.println("Generated " + iterations + " IDs in " + durationInSeconds + " seconds.");
-        System.out.println("Average time per ID generation: " + (durationInSeconds / iterations) + " seconds.");
     }
 
     public static void concurrentBenchmarkTest() {
         int dataCenterId = 1;
         int machineId = 1;
-        int numThreads = 12; // Number of threads to use for the test
-        int idsPerThread = 100_000; // Number of IDs each thread should generate
+        int numThreads = 10; // Number of threads to use for the test
+        int idsPerThread = 2_000_000; // Number of IDs each thread should generate
 
         SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(dataCenterId, machineId);
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
@@ -77,7 +79,5 @@ public class Main {
         double durationInSeconds = (endTime - startTime) / 1_000_000_000.0;
 
         System.out.println("Concurrent test generated " + (numThreads * idsPerThread) + " IDs in " + durationInSeconds + " seconds.");
-        System.out.println("Unique IDs count: " + uniqueIds.size());
-        System.out.println("Average time per ID generation: " + (durationInSeconds / (numThreads * idsPerThread)) + " seconds.");
     }
 }
