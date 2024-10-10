@@ -57,4 +57,9 @@ public class SnowflakeConfig {
      * A mask used to ensure the sequence number fits within the allocated number of bits.
      */
     public static final int SEQUENCE_MASK = ~(-1 << SEQUENCE_BITS);
+
+    /**
+     * Tolerance window for clock rollback (in milliseconds)
+     */
+    public static final long CLOCK_BACKWARD_TOLERANCE = 5;
 }

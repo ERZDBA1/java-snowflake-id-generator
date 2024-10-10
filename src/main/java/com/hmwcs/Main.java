@@ -4,6 +4,7 @@ import com.hmwcs.snowflake.generator.SnowflakeIdGenerator;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,9 +31,11 @@ public class Main {
         SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(dataCenterId, machineId);
 
         long startTime = System.currentTimeMillis();
+        Set<Long> uniqueIds = new HashSet<>();
 
         for (int i = 0; i < iterations; i++) {
-            idGenerator.nextId();
+            long id = idGenerator.nextId();
+            if (!uniqueIds.add(id)) throw new RuntimeException("Duplicate ID detected: " + id);
         }
 
         long endTime = System.currentTimeMillis();;
@@ -49,7 +52,7 @@ public class Main {
 
         SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(dataCenterId, machineId);
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        // Set<Long> uniqueIds = new HashSet<>(); // To store unique IDs
+        Set<Long> uniqueIds = ConcurrentHashMap.newKeySet();
 
         long startTime = System.currentTimeMillis();
 
@@ -57,11 +60,7 @@ public class Main {
             executor.submit(() -> {
                 for (int j = 0; j < idsPerThread; j++) {
                     long id = idGenerator.nextId();
-                    // synchronized (uniqueIds) { // Ensure thread-safe addition to the set
-                    //    if (!uniqueIds.add(id)) { // Check for duplicates
-                    //        throw new RuntimeException("Duplicate ID detected: " + id);
-                    //    }
-                    //}
+                    if (!uniqueIds.add(id)) throw new RuntimeException("Duplicate ID detected: " + id);
                 }
             });
         }
