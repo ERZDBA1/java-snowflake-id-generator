@@ -50,7 +50,6 @@ public class SnowflakeIdGenerator {
         this(dataCenterId, machineId, DEFAULT_EPOCH);
     }
 
-    // Todo: add premature timestamp restriction
     /**
      * Constructor to initialize the Snowflake ID generator with a custom epoch.
      *
@@ -129,7 +128,6 @@ public class SnowflakeIdGenerator {
                 (sequence & SEQUENCE_MASK);
     }
 
-    // Todo: add clock move backward tolerance logic
     /**
      * Waits for the next millisecond if the clock has not advanced.
      *
