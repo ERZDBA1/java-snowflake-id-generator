@@ -136,14 +136,14 @@ public class SnowflakeIdGenerator {
      * @throws ClockMovedBackwardsException if the system clock moves backwards beyond the tolerance limit
      */
     private long waitNextMillis(long lastTimestamp) {
-        long timestamp = currentTimeMillis();
-        while (lastTimestamp >= timestamp) {
-            if (lastTimestamp > timestamp + CLOCK_BACKWARD_TOLERANCE)
-                throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
+        long timestamp;
 
-            Thread.onSpinWait();
+        do {
             timestamp = currentTimeMillis();
-        }
+            if (timestamp + CLOCK_BACKWARD_TOLERANCE < lastTimestamp)
+                throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
+            Thread.onSpinWait();
+        } while (lastTimestamp >= timestamp);
 
         return timestamp;
     }
