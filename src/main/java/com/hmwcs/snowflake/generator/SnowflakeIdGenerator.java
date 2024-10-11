@@ -44,7 +44,7 @@ public class SnowflakeIdGenerator {
      *
      * @param dataCenterId The ID of the data center (0-31). Cannot be null.
      * @param machineId The ID of the machine (0-31). Cannot be null.
-     * @throws IllegalArgumentException if the dataCenterId or machineId is out of range
+     * @throws IllegalArgumentException if the dataCenterId, machineId is out of range, or custom epoch is invalid.
      */
     public SnowflakeIdGenerator(int dataCenterId, int machineId) {
         this(dataCenterId, machineId, DEFAULT_EPOCH);
@@ -62,6 +62,9 @@ public class SnowflakeIdGenerator {
     public SnowflakeIdGenerator(int dataCenterId, int machineId, long customEpoch) {
         if (customEpoch > currentTimeMillis())
             throw new IllegalArgumentException("Custom epoch cannot be in the future");
+
+        if (customEpoch < 0)
+            throw new IllegalArgumentException("Custom epoch cannot be before the Unix epoch (1970-01-01)");
 
         if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
             throw new IllegalArgumentException(
@@ -132,15 +135,16 @@ public class SnowflakeIdGenerator {
      *
      * @param lastTimestamp The timestamp of the last ID generated
      * @return The current timestamp
-     * @throws ClockMovedBackwardsException if the system clock moves backwards
+     * @throws ClockMovedBackwardsException if the system clock moves backwards beyond the tolerance limit
      */
     private long waitNextMillis(long lastTimestamp) {
         long timestamp = currentTimeMillis();
-        while (timestamp <= lastTimestamp) {
-            Thread.onSpinWait();
-            if (timestamp < lastTimestamp)
+        while (lastTimestamp >= timestamp) {
+            if (lastTimestamp > timestamp + CLOCK_BACKWARD_TOLERANCE)
                 throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
-            else timestamp = currentTimeMillis();
+
+            Thread.onSpinWait();
+            timestamp = currentTimeMillis();
         }
 
         return timestamp;
