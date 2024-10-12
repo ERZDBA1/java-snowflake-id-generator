@@ -87,14 +87,10 @@ public class SnowflakeIdGenerator {
     public long nextId() {
         while (true) {
             State currentState = atomicState.get();
+            int sequence = currentState.sequence;
             long timestamp = currentTimeMillis();
 
-            if (timestamp < currentState.timestamp)
-                throw new ClockMovedBackwardsException(currentState.timestamp, timestamp);
-
-            int sequence = currentState.sequence;
-
-            if (timestamp == currentState.timestamp) {
+            if (timestamp <= currentState.timestamp) {
                 sequence = (sequence + 1) & SEQUENCE_MASK;
                 if (sequence == 0)
                     timestamp = waitNextMillis(timestamp);
