@@ -61,14 +61,11 @@ public class SnowflakeIdGenerator {
     public SnowflakeIdGenerator(int dataCenterId, int machineId, long customEpoch) {
         if (customEpoch > currentTimeMillis())
             throw new IllegalArgumentException("Custom epoch cannot be in the future");
-
         if (customEpoch < 0)
             throw new IllegalArgumentException("Custom epoch cannot be before the Unix epoch (1970-01-01)");
-
         if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0)
             throw new IllegalArgumentException(
                     String.format("Data Center ID (%d) must be between 0 and %d", dataCenterId, MAX_DATA_CENTER_ID));
-
         if (machineId > MAX_MACHINE_ID || machineId < 0)
             throw new IllegalArgumentException(
                     String.format("Machine ID (%d) must be between 0 and %d", machineId, MAX_MACHINE_ID));
@@ -87,10 +84,15 @@ public class SnowflakeIdGenerator {
     public long nextId() {
         while (true) {
             State currentState = atomicState.get();
+            long lastTimestamp = currentState.timestamp;
             int sequence = currentState.sequence;
+
             long timestamp = currentTimeMillis();
 
-            if (timestamp <= currentState.timestamp) {
+            if (timestamp < currentState.timestamp)
+                throw new ClockMovedBackwardsException(currentState.timestamp, timestamp);
+
+            if (timestamp == currentState.timestamp) {
                 sequence = (sequence + 1) & SEQUENCE_MASK;
                 if (sequence == 0)
                     timestamp = waitNextMillis(timestamp);
