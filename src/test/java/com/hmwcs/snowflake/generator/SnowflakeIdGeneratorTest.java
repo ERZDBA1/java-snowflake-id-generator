@@ -16,9 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class) // Specify order strategy
 public class SnowflakeIdGeneratorTest {
-    private SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(9, 29);
+    private final SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(9, 29);
     private final int numThreads = Runtime.getRuntime().availableProcessors();
-    private int idsPerThread = 1_000_000;
+    private final int idsPerThread = 5_000_000;
 
     @Test
     @Order(0)
@@ -41,8 +41,10 @@ public class SnowflakeIdGeneratorTest {
         }
         long endTime = System.nanoTime();
         double durationInSeconds = (endTime - startTime) / 1_000_000_000.0; // Convert nanoseconds to seconds
+        double idsPerSecond = iterations / durationInSeconds; // Calculate IDs per second
 
         System.out.println("Generated " + iterations + " unique IDs in " + durationInSeconds + " seconds.");
+        System.out.println("Throughput: " + idsPerSecond + " IDs/second");
     }
 
     @Test
@@ -63,7 +65,8 @@ public class SnowflakeIdGeneratorTest {
 
         executor.shutdown();
         try {
-            executor.awaitTermination(1, TimeUnit.HOURS); // Wait for all tasks to complete or timeout after 1 hour
+            if (!executor.awaitTermination(10, TimeUnit.MINUTES)) // Wait for all tasks to complete or timeout after 10 minutes
+                fail("Executor did not terminate in the given time.");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             fail("Concurrent test interrupted.");
@@ -71,7 +74,9 @@ public class SnowflakeIdGeneratorTest {
 
         long endTime = System.nanoTime();
         double durationInSeconds = (endTime - startTime) / 1_000_000_000.0; // Convert nanoseconds to seconds
+        double idsPerSecond = (numThreads * idsPerThread) / durationInSeconds; // Calculate IDs per second
 
         System.out.println("Generated " + (numThreads * idsPerThread) + " unique IDs concurrently in " + durationInSeconds + " seconds.");
+        System.out.println("Throughput: " + idsPerSecond + " IDs/second");
     }
 }
