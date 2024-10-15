@@ -88,16 +88,14 @@ public class SnowflakeIdGenerator {
             int sequence = currentState.sequence;
 
             long timestamp = currentTimeMillis();
+            if (timestamp + CLOCK_BACKWARD_TOLERANCE < lastTimestamp)
+                throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
+            else if (timestamp < lastTimestamp) timestamp = lastTimestamp;
 
-            if (timestamp < currentState.timestamp)
-                throw new ClockMovedBackwardsException(currentState.timestamp, timestamp);
-
-            if (timestamp == currentState.timestamp) {
+            if (timestamp == lastTimestamp) {
                 sequence = (sequence + 1) & SEQUENCE_MASK;
-                if (sequence == 0)
-                    timestamp = waitNextMillis(timestamp);
+                if (sequence == 0) timestamp = waitNextMillis(timestamp);
             } else sequence = 0;
-
             State newState = new State(timestamp, sequence);
 
             if (atomicState.compareAndSet(currentState, newState))
@@ -137,11 +135,12 @@ public class SnowflakeIdGenerator {
         long timestamp;
 
         do {
+            Thread.onSpinWait();
+
             timestamp = currentTimeMillis();
             if (timestamp + CLOCK_BACKWARD_TOLERANCE < lastTimestamp)
                 throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
-            Thread.onSpinWait();
-        } while (lastTimestamp >= timestamp);
+        } while (timestamp <= lastTimestamp);
 
         return timestamp;
     }
