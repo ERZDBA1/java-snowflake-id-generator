@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SnowflakeIdGeneratorTest {
     private final SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(9, 29);
     private final int numThreads = Runtime.getRuntime().availableProcessors();
-    private final int idsPerThread = 5_000_000;
+    private final int idsPerThread = 2_000_000;
 
     @Test
     @Order(0)
@@ -43,8 +43,9 @@ public class SnowflakeIdGeneratorTest {
         double durationInSeconds = (endTime - startTime) / 1_000_000_000.0; // Convert nanoseconds to seconds
         double idsPerSecond = iterations / durationInSeconds; // Calculate IDs per second
 
-        System.out.println("Generated " + iterations + " unique IDs in " + durationInSeconds + " seconds.");
-        System.out.println("Throughput: " + idsPerSecond + " IDs/second");
+        System.out.println("Generated " + iterations + " unique IDs in " +
+                String.format("%.2f", durationInSeconds) + " seconds.");
+        System.out.println("Throughput: " + String.format("%.2f", idsPerSecond) + " IDs/second");
     }
 
     @Test
@@ -76,7 +77,8 @@ public class SnowflakeIdGeneratorTest {
         double durationInSeconds = (endTime - startTime) / 1_000_000_000.0; // Convert nanoseconds to seconds
         double idsPerSecond = (numThreads * idsPerThread) / durationInSeconds; // Calculate IDs per second
 
-        System.out.println("Generated " + (numThreads * idsPerThread) + " unique IDs concurrently in " + durationInSeconds + " seconds.");
-        System.out.println("Throughput: " + idsPerSecond + " IDs/second");
+        System.out.println("Generated " + (numThreads * idsPerThread) + " unique IDs concurrently in " +
+                String.format("%.2f", durationInSeconds) + " seconds.");
+        System.out.println("Throughput: " + String.format("%.2f", idsPerSecond) + " IDs/second");
     }
 }

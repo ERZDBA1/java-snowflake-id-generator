@@ -2,10 +2,10 @@ package com.hmwcs.snowflake.generator;
 
 import com.hmwcs.snowflake.exception.ClockMovedBackwardsException;
 
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hmwcs.snowflake.config.SnowflakeConfig.*;
-import static java.lang.System.currentTimeMillis;
 
 /**
  * Generates unique IDs using the Twitter Snowflake algorithm.
@@ -88,9 +88,8 @@ public class SnowflakeIdGenerator {
             int sequence = currentState.sequence;
 
             long timestamp = currentTimeMillis();
-            if (timestamp + CLOCK_BACKWARD_TOLERANCE < lastTimestamp)
-                throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
-            else if (timestamp < lastTimestamp) timestamp = lastTimestamp;
+            checkClockTolerance(lastTimestamp, timestamp);
+            if (timestamp < lastTimestamp) timestamp = lastTimestamp;
 
             if (timestamp == lastTimestamp) {
                 sequence = (sequence + 1) & SEQUENCE_MASK;
@@ -125,6 +124,15 @@ public class SnowflakeIdGenerator {
     }
 
     /**
+     * Returns the current time in milliseconds.
+     *
+     * @return Current time in milliseconds since Unix epoch
+     */
+    private long currentTimeMillis() {
+        return Instant.now().toEpochMilli();
+    }
+
+    /**
      * Waits for the next millisecond if the clock has not advanced.
      *
      * @param lastTimestamp The timestamp of the last ID generated
@@ -133,15 +141,28 @@ public class SnowflakeIdGenerator {
      */
     private long waitNextMillis(long lastTimestamp) {
         long timestamp;
-
         do {
             Thread.onSpinWait();
-
             timestamp = currentTimeMillis();
-            if (timestamp + CLOCK_BACKWARD_TOLERANCE < lastTimestamp)
-                throw new ClockMovedBackwardsException(lastTimestamp, timestamp);
+            checkClockTolerance(lastTimestamp, currentTimeMillis());
         } while (timestamp <= lastTimestamp);
 
         return timestamp;
+    }
+
+    /**
+     * Ensures the system clock has not moved backwards beyond the allowed tolerance.
+     *
+     * <p>
+     * If the clock moves backwards beyond the defined tolerance, this method will throw an exception.
+     * </p>
+     *
+     * @param lastTimestamp The timestamp of the last ID generated
+     * @param currentTimestamp The current system timestamp
+     * @throws ClockMovedBackwardsException if the clock moves backwards beyond the tolerance limit
+     */
+    private void checkClockTolerance(long lastTimestamp, long currentTimestamp) {
+        if (currentTimestamp + CLOCK_BACKWARD_TOLERANCE < lastTimestamp)
+            throw new ClockMovedBackwardsException(lastTimestamp, currentTimestamp);
     }
 }
