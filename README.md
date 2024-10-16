@@ -8,6 +8,11 @@ This Java implementation of the Snowflake ID algorithm generates unique 64-bit I
 - **Custom Epoch Support**: Allows setting a custom epoch start time.
 - **Optimized Performance**: High throughput achieved through efficient synchronization using Compare-And-Swap (CAS), minimizing contention and ensuring fast, reliable concurrent ID generation.
 
+## Strategies
+
+- **Clock Backward Handling**: The program requires monotonically increasing timestamps to ensure ID uniqueness. If a clock rollback occurs (e.g., due to NTP), a 50 ms tolerance is allowed; beyond this, an exception is thrown, otherwise, it waits until the timestamp matches or exceeds the last recorded value.
+- **Sequence Overflow Handling**: For sequence overflow within a single millisecond, the strategy is to wait for the next timestamp.
+
 ## ID Structure
 
 | Component      | Bits  | Description                                             |
@@ -45,7 +50,7 @@ System.out.println("Generated ID: " + uniqueId);
 
 To install this library to your local Maven repository:
 
-```
+```bash
 mvn clean install
 ```
 
@@ -53,7 +58,7 @@ mvn clean install
 
 Run unit tests to verify ID generation and performance:
 
-```
+```bash
 mvn test
 ```
 
