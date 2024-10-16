@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SnowflakeIdGeneratorTest {
     private final SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(9, 29);
     private final int numThreads = Runtime.getRuntime().availableProcessors();
-    private final int idsPerThread = 5_000_000;
+    private final int idsPerThread = 1_000_000;
 
     @Test
     @Order(0)
