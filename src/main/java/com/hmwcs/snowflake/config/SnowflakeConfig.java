@@ -61,5 +61,5 @@ public class SnowflakeConfig {
     /**
      * Tolerance window for clock rollback (in milliseconds)
      */
-    public static final long CLOCK_BACKWARD_TOLERANCE = 50;
+    public static final int CLOCK_BACKWARD_TOLERANCE = 50;
 }
