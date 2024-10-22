@@ -62,6 +62,18 @@ Run unit tests to verify ID generation and performance:
 mvn test
 ```
 
+## Maven Dependency
+
+To use this library in your project, add the following to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>com.hmwcs</groupId>
+    <artifactId>snowflake</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
 ### Test Results (M1 Pro Chip)
 
 ```
