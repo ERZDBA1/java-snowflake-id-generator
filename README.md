@@ -69,7 +69,7 @@ To use this library in your project, add the following to your `pom.xml`:
 ```xml
 <dependency>
     <groupId>com.hmwcs</groupId>
-    <artifactId>snowflake</artifactId>
+    <artifactId>hmwcs-snowflake</artifactId>
     <version>1.0.0</version>
 </dependency>
 ```
